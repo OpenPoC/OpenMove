@@ -3,7 +3,7 @@ module openmove::smt {
     use std::vector::{Self, length};
     use openmove::std::{slice, bit_at, count_same_prefix_bits};
 
-    const EINVALID_SIZE: u64 = 21;
+    const EINVALID_SIZE: u64 = 20001;
 
     const UNIT_SIZE: u64 = 32;
     const EMPTY_LEAF: vector<u8> = x"0000000000000000000000000000000000000000000000000000000000000000";

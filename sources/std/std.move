@@ -1,7 +1,7 @@
 module openmove::std {
     use std::vector::{empty, length, borrow, push_back};
 
-    const E_OVERFLOW: u64 = 1;
+    const E_OVERFLOW: u64 = 10001;
 
     public fun slice<T: copy>(data: &vector<T>, start: u64, end: u64): vector<T> {
         assert!(end >= start, E_OVERFLOW);
