@@ -5,13 +5,23 @@ module openmove::smt {
 
     const EINVALID_SIZE: u64 = 20001;
 
+    /// Size of ode value or hash
     const UNIT_SIZE: u64 = 32;
+
+    /// Empty leaf node value
     const EMPTY_LEAF: vector<u8> = x"0000000000000000000000000000000000000000000000000000000000000000";
+    
+    /// Existing leaf node value
     const LEAF: vector<u8> = x"0000000000000000000000000000000000000000000000000000000000000001";
+    
+    /// Flag indicates a leaf node
     const FLAG_LEAF: u8 = 0;
+
+    /// Flag indicates a branch node
     const FLAG_NODE: u8 = 1;
 
 
+    /// Compute hash digest of a tree node
     public fun hash(flag: u8, left: vector<u8>, right: vector<u8>): vector<u8> {
         assert!(length<u8>(&left) == 32, EINVALID_SIZE);
         assert!(length<u8>(&right) == 32, EINVALID_SIZE);
@@ -21,7 +31,7 @@ module openmove::smt {
         sha2_256(data)
     }
 
-
+    /// Compute the tree root
     public fun compute_root(path: &vector<u8>, node: vector<u8>, siblings: &vector<u8>): vector<u8> {
         let size = length<u8>(siblings) / UNIT_SIZE;
         assert!(length<u8>(siblings) == size * UNIT_SIZE, EINVALID_SIZE);
@@ -40,6 +50,7 @@ module openmove::smt {
         node
     }
 
+    /// Compute the updated root of the tree with new leaf included
     public fun compute_root_with_proof(empty: bool, path: vector<u8>, proof_path: vector<u8>, siblings: &vector<u8>): vector<u8> {
         let node = hash(FLAG_LEAF, path, LEAF);
         if (empty) {
@@ -67,8 +78,10 @@ module openmove::smt {
         compute_root(&path, node, siblings)
     }
 
+    /// Verify the non-existence of a leaf node
+    /// `empty` indicates the parent branch is empty or not
     public fun verify_non_existence(root: &vector<u8>, empty: bool, path: &vector<u8>, proof_path: vector<u8>, proof_siblings: &vector<u8>): bool {
-        // the first leaf
+        // the first leaf of the tree
         if (root == &EMPTY_LEAF) {
             return true
         };
@@ -86,6 +99,7 @@ module openmove::smt {
         &compute_root(&proof_path, leaf, proof_siblings) == root
     }
 
+    /// Verify the existence of a leaf node
     public fun verify_existence(root: &vector<u8>, path: vector<u8>, siblings: &vector<u8>): bool {
         let leaf = hash(FLAG_LEAF, path, LEAF);
         &compute_root(&path, leaf, siblings) == root
