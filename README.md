@@ -1,6 +1,13 @@
 # OpenMove
 Open Source Move Code
 
+## Branch
+
+| Branch   | Compatible With Chain |
+| -------- | --------------------  |
+| main     | Aptos                 |
+
+
 ## Modules
 
 ### std
