@@ -1,4 +1,4 @@
-# openmove
+# OpenMove
 Open Source Move Code
 
 ## Modules

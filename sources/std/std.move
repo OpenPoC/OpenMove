@@ -1,5 +1,5 @@
 module openmove::std {
-    use std::vector::{empty, length, borrow, push_back};
+    use std::vector::{empty, length, borrow, push_back, append};
 
     const E_OVERFLOW: u64 = 10001;
 
@@ -37,5 +37,63 @@ module openmove::std {
             index = index + 1;
         };
         index
+    }
+
+    /// Encode u64 without zero prefixes in big-endian, zero will be encoded as empty bytes
+    public fun encode_compact(v: u64, started: bool): vector<u8> {
+        let i = 8u8;
+        let bytes = empty<u8>();
+        while (i > 0) {
+            let byte = (v >> (i * 8 - 8)) & 0xff;
+            if (!started && byte > 0) {
+                started = true;
+            };
+            if (started) {
+                push_back(&mut bytes, (byte as u8));
+            };
+            i = i - 1;
+        };
+
+        bytes
+    }
+
+    /// Decode u64 from bytes without zero prefixes in big-endian, empty bytes will be decoded as zero
+    public fun decode_u64_compact(bytes: &vector<u8>): u64 {
+        let v = 0u64;
+        let size = length<u8>(bytes);
+        let i = 0u64;
+        while (i < size) {
+            v = (v << 8) + (*borrow<u8>(bytes, i) as u64);
+            i = i + 1;
+        };
+        v
+    }
+
+    public fun encode_u64_compact(v: u64): vector<u8> {
+        encode_compact(v, false)
+    }
+
+    /// Encode u128 without zero prefixes in big-endian, zero will be encoded as empty bytes
+    public fun encode_u128_compact(v: u128): vector<u8> {
+        let b = (v >> 64) & 0xFFFFFFFFFFFFFFFF;
+        let l = v & 0xFFFFFFFFFFFFFFFF;
+        if (b > 0) {
+            let v = encode_compact((b as u64), false);
+            append(&mut v, encode_compact((l as u64), true));
+            v
+        } else {
+            encode_compact((b as u64), false)
+        }
+    }
+
+    public fun decode_u128_compact(bytes: &vector<u8>): u128 {
+        let v = 0u128;
+        let size = length<u8>(bytes);
+        let i = 0u64;
+        while (i < size) {
+            v = (v << 8) + (*borrow<u8>(bytes, i) as u128);
+            i = i + 1;
+        };
+        v
     }
 }
