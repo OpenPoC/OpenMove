@@ -1,5 +1,5 @@
 module openmove::smt {
-    use std::hash::sha2_256;
+    use std::hash::sha3_256;
     use std::vector::{Self, length};
     use openmove::std::{slice, bit_at, count_same_prefix_bits};
 
@@ -28,7 +28,7 @@ module openmove::smt {
         let data = vector[flag];
         vector::append(&mut data, left);
         vector::append(&mut data, right);
-        sha2_256(data)
+        sha3_256(data)
     }
 
     /// Compute the tree root
