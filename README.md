@@ -68,7 +68,7 @@ Common consensus utilities
 
 Thanks bro for buying me a coffee!
 
-| Chain                                        | wallet address                                                        |
+| Chain                                        | Wallet Address                                                        |
 | -------------------------------------------- | --------------------------------------------------------------------- |
 | Ethereum(including Layer2, BSC, Polygon, etc)| 0x9BB65F919483D2cB5455D24E8014E760E5272789                            |
 | Aptos                                        | 0x0bdb628ee8e9e1b9e9c1545920612eca7d2b6cd96cefdcfa9e53a2d22ac84ca5    |
