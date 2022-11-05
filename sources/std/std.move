@@ -86,6 +86,7 @@ module openmove::std {
         }
     }
 
+    /// Decode u128 from bytes without zero prefix in big-endian
     public fun decode_u128_compact(bytes: &vector<u8>): u128 {
         let v = 0u128;
         let size = length<u8>(bytes);
@@ -95,5 +96,17 @@ module openmove::std {
             i = i + 1;
         };
         v
+    }
+
+    public fun deduplicate<T: drop>(_list: &mut vector<T>) {
+
+    }
+
+    public fun unique_of<T: copy>(_list: &vector<T>): vector<T> {
+        empty<T>()
+    }
+
+    public fun count_unique_children<T>(_m: &vector<T>, _n: &vector<T>): u64 {
+        0
     }
 }
