@@ -1,9 +1,59 @@
 module openmove::mpt {
 
-    use std::vector::empty;
+    use std::vector::{borrow, push_back, length};
+    use aptos_std::aptos_hash::keccak256;
+    use openmove::std::{bytes_to_nibbles, contains_slice, slice};
+    use openmove::rlp;
 
-    public fun verify_proof(_root: &vector<u8>, _key: &vector<u8>, _proof: &vector<u8>): vector<u8> {
-        empty<u8>()
+    const EINVALID_NODE: u64 = 21001;
+    const EINVALID_NODE_HASH: u64 = 21002;
+    const ENODE_MISSING: u64 = 21003;
+
+    /// Verify mpt proof, and return the target value on success
+    /// NOTE: proof is a plain concated list of nodes, so proof = concate(node0, node1, node2, ...)
+    public fun verify_proof(hash: &vector<u8>, key: &vector<u8>, proof: vector<u8>): vector<u8> {
+        let buf = rlp::new_buf(proof);
+        let nibbles = bytes_to_nibbles(key);
+        let nibble_offset = 0u64;
+        push_back(&mut nibbles, 16);
+        loop {
+            let (node_data, _) = rlp::next(&mut buf); // Empty remaining byte should fail here
+            assert!(&keccak256(node_data) == hash, EINVALID_NODE_HASH);
+            let node = rlp::new_buf(node_data);
+            rlp::unwrap_list(&mut node); // A non-list should fail here.
+            let count = rlp::count(&node);
+            if (count == 17) { // a full node
+                let index = *borrow<u8>(&nibbles, nibble_offset);
+                while (index > 0) { rlp::advance(&mut node); };
+                hash = &rlp::read_bytes(&mut node);
+                nibble_offset = nibble_offset + 1;
+            } else if (count == 2) { // a short node
+                let (path, has_value) = parse_compacted_path(&rlp::read_bytes(&mut buf));
+                assert!(contains_slice(&nibbles, &path, nibble_offset), EINVALID_NODE);
+                nibble_offset = nibble_offset + length<u8>(&path);
+                let value_buf = rlp::new_buf(rlp::read_bytes(&mut buf));
+                let value = rlp::read_bytes(&mut value_buf);
+                if (has_value) {
+                    return value
+                };
+                hash = &value;
+            } else {
+                abort(EINVALID_NODE)
+            };
+            assert!(length<u8>(hash) > 0, ENODE_MISSING);
+        }
+    }
+
+    /// Parse encoded path of short nodes, return parsed path with wheter it has a value
+    public fun parse_compacted_path(path: &vector<u8>): (vector<u8>, bool) {
+        let flag = *borrow<u8>(path, 0) >> 8;
+        let nibbles = bytes_to_nibbles(path);
+        let offset = if (flag & 1 > 0) { // odd nibbles
+            1
+        } else { // even nibbles 
+            2
+        };
+       (slice(&nibbles, offset, length<u8>(&nibbles)), flag > 1)
     }
 }
 
@@ -113,7 +163,7 @@ a08b8528f4163f709da762e379406dc9b54e2762ca799142ace4527e7f4d87a721
 
 "0xf841
 9e
-3e412f275a18f6e4d622aee4ff40b21467c926224771b782d4c095d1444b  indicates a value node
+3 e412f275a18f6e4d622aee4ff40b21467c926224771b782d4c095d1444 b  indicates a value node
 a1
 a0
 2b9176b625f740c5b3c43ca502eb3363df27e2ba2ea14c3a3c12a80067e00ff5"   // value

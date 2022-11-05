@@ -24,6 +24,16 @@ module openmove::rlp {
         (data, offset)
     }
 
+    /// Read the length of the rest bytes
+    public fun rest_length(buf: &Buf): u64 {
+        length<u8>(&buf.data) - buf.offset
+    }
+
+    /// Count remaining values
+    public fun count(buf: &Buf): u64 {
+        count_values(&buf.data, buf.offset)
+    }
+
     /// Create a new Buf instance
     public fun new_buf(data: vector<u8>): Buf {
         Buf { data: data, offset: 0 }
@@ -87,13 +97,29 @@ module openmove::rlp {
 
     /// Unwrap list
     public fun unwrap_list(buf: &mut Buf) {
-        let (_, offset, _) = read(&buf.data, buf.offset);
+        let (kind, offset, _) = read(&buf.data, buf.offset);
+        assert!(kind == LIST, E_DECODE_FAILURE);
         buf.offset = offset;
+    }
+
+    /// Advance next item
+    public fun advance(buf: &mut Buf) {
+        let (_, offset, size) = read(&buf.data, buf.offset);
+        buf.offset = offset + size;
+    }
+
+    /// next return the next item with its kind
+    public fun next(buf: &mut Buf): (vector<u8>, u64) {
+        let (kind, offset, size) = read(&buf.data, buf.offset);
+        let start = buf.offset;
+        buf.offset = offset + size;
+        (slice(&buf.data, start, buf.offset), kind)
     }
 
     /// Unwrap list and return the list body as new buf
     public fun decode_list(buf: &mut Buf): Buf {
-        let (_, offset, size) = read(&buf.data, buf.offset);
+        let (kind, offset, size) = read(&buf.data, buf.offset);
+        assert!(kind == LIST, E_DECODE_FAILURE);
         buf.offset = offset + size;
         new_buf(slice(&buf.data, offset, buf.offset))
     }
@@ -118,10 +144,9 @@ module openmove::rlp {
         }
     }
 
-    /// Count encoded values in bytes
-    public fun count_values(data: &vector<u8>): u64 {
+    /// Count encoded values in bytes start at offset
+    public fun count_values(data: &vector<u8>, offset: u64): u64 {
         let n: u64 = 0;
-        let offset: u64 = 0;
         let len: u64 = length<u8>(data);
         while (offset < len) {
             let size: u64;

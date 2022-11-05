@@ -16,6 +16,29 @@ module openmove::std {
         cp
     }
 
+    /// Check whether vector a contains b at the offset
+    public fun contains_slice<T>(data: &vector<T>, sub: &vector<T>, offset: u64): bool {
+        let i = 0u64;
+        while (i < length<T>(sub)) {
+            if (borrow<T>(sub, i) != borrow<T>(data, offset + i)) {
+                return false
+            }
+        };
+        true
+    }
+
+    /// Convert bytes 256 base to hex nibbles of 16 base 
+    public fun bytes_to_nibbles(data: &vector<u8>): vector<u8> {
+        let hex = empty<u8>();
+        let i = 0u64;
+        while (i < length<u8>(data)) {
+            let v = *borrow<u8>(data, i);
+            push_back(&mut hex, ((v >> 8) as u8));
+            push_back(&mut hex, ((v & 0xFF) as u8));
+        };
+        hex
+    }
+
     /// Read the `i` bit of vector<u8>
     public fun bit_at(data: &vector<u8>, i: u64): u8 {
         (*borrow<u8>(data, i / 8) >> (7 - (i % 8 as u8))) & 1
