@@ -1,5 +1,5 @@
 module openmove::std {
-    use std::vector::{empty, length, borrow, push_back, append};
+    use std::vector::{empty, length, borrow, push_back, append, contains, pop_back, borrow_mut};
 
     const E_OVERFLOW: u64 = 10001;
 
@@ -123,15 +123,79 @@ module openmove::std {
         v
     }
 
-    public fun deduplicate<T: drop>(_list: &mut vector<T>) {
-
+    // Deduplicate in place
+    public fun deduplicate<T: drop>(list: &mut vector<T>) {
+        let i = 1u64;
+        while (i < length<T>(list)) {
+            let j = 0u64;
+            {
+                let v = borrow<T>(list, i);
+                while (j < i && borrow<T>(list, j) != v) {
+                    j = j + 1;
+                };
+            };
+            if (j == i) { // unique item
+                i = i + 1;
+            } else {
+                let last = pop_back(list);
+                if (i < length<T>(list)) {
+                    *borrow_mut(list, i) = last;
+                } else {
+                    return
+                };
+            };
+        };
     }
 
-    public fun unique_of<T: copy>(_list: &vector<T>): vector<T> {
-        empty<T>()
+    /// Go through the list, and pick out the unique items
+    public fun unique_of<T: copy>(list: &vector<T>): vector<T> {
+        let uniques = empty<T>();
+        let i = 0u64;
+        while (i < length<T>(list)) {
+            let item = borrow<T>(list, i);
+            if (!contains<T>(&uniques, item)) {
+                push_back(&mut uniques, *item);
+            };
+            i = i + 1;
+        };
+        uniques
     }
 
-    public fun count_unique_children<T>(_m: &vector<T>, _n: &vector<T>): u64 {
-        0
+    /// Count unique items that're in both m and n.
+    public fun count_unique<T>(m: &vector<T>, n: &vector<T>): u64 {
+        let i = 0u64;
+        let count = 0u64;
+        while (i < length<T>(m)) {
+            let v = borrow<T>(m, i);
+            let j = 0;
+            while (j < i && borrow<T>(m, j) != v) {
+                j = j + 1;
+            };
+            if (j == i && contains<T>(n, v)) {
+                count = count + 1;
+            };
+            i = i + 1;
+        };
+        count
+    }
+
+    #[test]
+    fun test_deduplicate() {
+        let a = x"01020304010403050201060701";
+        deduplicate(&mut a);
+        assert!(a == x"01020304070605", 0);
+    }
+
+    #[test]
+    fun test_unique_of() {
+        assert!(unique_of(&x"0102030102040104") == x"01020304", 0);
+        assert!(unique_of(&x"0102030405") == x"0102030405", 0);
+    }
+
+    #[test]
+    fun test_count_uniqueue() {
+        assert!(count_unique(&x"010203010204", &x"010305") == 2, 0);
+        assert!(count_unique(&x"010203010204", &x"010203010204") == 4, 0);
+        assert!(count_unique(&x"010203010204", &x"050605") == 0, 0);
     }
 }
