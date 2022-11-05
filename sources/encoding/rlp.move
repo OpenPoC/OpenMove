@@ -8,6 +8,11 @@ module openmove::rlp {
 
     const E_DECODE_FAILURE: u64 = 30001;
 
+    /// Value KINDs
+    const BYTE: u64 = 0;
+    const STRING: u64 = 1;
+    const LIST: u64 = 2;
+
     struct Buf has drop {
         data: vector<u8>,
         offset: u64,
@@ -31,7 +36,7 @@ module openmove::rlp {
 
     /// Read a u64 from buf
     public fun read_u64(buf: &mut Buf): u64 {
-        let (offset, size) = read(&buf.data, buf.offset);
+        let (_, offset, size) = read(&buf.data, buf.offset);
         if (size == 1) {
             if (offset != buf.offset) {
                 assert!(*borrow<u8>(&buf.data, offset) > 0x7f, E_DECODE_FAILURE);
@@ -48,7 +53,7 @@ module openmove::rlp {
 
     /// Read a u128 from buf
     public fun read_u128(buf: &mut Buf): u128 {
-        let (offset, size) = read(&buf.data, buf.offset);
+        let (_, offset, size) = read(&buf.data, buf.offset);
         if (size == 1) {
             if (offset != buf.offset) {
                 assert!(*borrow<u8>(&buf.data, offset) > 0x7f, E_DECODE_FAILURE);
@@ -65,14 +70,14 @@ module openmove::rlp {
 
     /// Read as address from buf
     public fun read_address(buf: &mut Buf): address {
-        let (offset, size) = read(&buf.data, buf.offset);
+        let (_, offset, size) = read(&buf.data, buf.offset);
         buf.offset = offset + size;
         from_bcs::to_address(slice(&buf.data, offset, offset + size))
     }
 
     /// Read bytes
     public fun read_bytes(buf: &mut Buf): vector<u8> {
-        let (offset, size) = read(&buf.data, buf.offset);
+        let (_, offset, size) = read(&buf.data, buf.offset);
         if (size == 1 && offset != buf.offset) {
             assert!(*borrow<u8>(&buf.data, offset) > 0x7f, E_DECODE_FAILURE);
         };
@@ -82,35 +87,49 @@ module openmove::rlp {
 
     /// Unwrap list
     public fun unwrap_list(buf: &mut Buf) {
-        let (offset, _) = read(&buf.data, buf.offset);
+        let (_, offset, _) = read(&buf.data, buf.offset);
         buf.offset = offset;
     }
 
     /// Unwrap list and return the list body as new buf
     public fun decode_list(buf: &mut Buf): Buf {
-        let (offset, size) = read(&buf.data, buf.offset);
+        let (_, offset, size) = read(&buf.data, buf.offset);
         buf.offset = offset + size;
         new_buf(slice(&buf.data, offset, buf.offset))
     }
 
-    /// Read the current item with offset, returns the advanced offset and the size of the item
-    public fun read(data: &vector<u8>, offset: u64): (u64, u64) {
+    /// Read the current item with offset, returns kind, advanced offset and the size of the item
+    public fun read(data: &vector<u8>, offset: u64): (u64, u64, u64) {
         let kind = (*borrow<u8>(data, offset) as u64);
         if (kind < 0x80) {
-            (offset, 1)
+            (BYTE, offset, 1)
         } else if (kind < 0xb8) {
             let size = kind - 0x80;
-            (offset + 1, size)
+            (STRING, offset + 1, size)
         } else if (kind < 0xc0) {
             let size = read_length(data, offset + 1, kind - 0xb7);
-            (offset + kind - 0xb6, size)
+            (STRING, offset + kind - 0xb6, size)
         } else if (kind < 0xf8) {
             let size = kind - 0xc0;
-            (offset + 1, size)
+            (LIST, offset + 1, size)
         } else {
             let size = read_length(data, offset + 1, kind - 0xf7);
-            (offset + kind - 0xf6, size)
+            (LIST, offset + kind - 0xf6, size)
         }
+    }
+
+    /// Count encoded values in bytes
+    public fun count_values(data: &vector<u8>): u64 {
+        let n: u64 = 0;
+        let offset: u64 = 0;
+        let len: u64 = length<u8>(data);
+        while (offset < len) {
+            let size: u64;
+            (_, offset, size) = read(data, offset);
+            offset = offset + size;
+            n = n + 1;
+        };
+        n
     }
 
     /// Read variable length with specified size of length bytes

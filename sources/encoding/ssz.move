@@ -1,0 +1,2 @@
+module openmove::ssz {
+}
