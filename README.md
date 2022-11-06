@@ -23,7 +23,7 @@ We aim to provide production ready open source libraries for move ecosystem, how
 | crypto   | DONE                 | 40001                  |
 | abi      | TO_DO                | NULL                   |
 | ssz      | TO_DO                | NULL                   |
-| merkle   | TO_DO                | NULL                   |
+| merkle   | DONE                 | 22001                  |
 
 
 ### std
@@ -36,7 +36,7 @@ Extensions and utilities for standard libraries.
 
 - Integer serialization
 
-### tree
+#### tree
 
 Common merkle tree structures for proof verification.
 
@@ -44,7 +44,9 @@ Common merkle tree structures for proof verification.
 
 - Merkle Patricia Trie for proof verifications in Ethereum
 
-## encoding
+- Simple Merkle Trie proof verification
+
+### encoding
 
 Common encoding/serialization lib.
 
@@ -55,13 +57,17 @@ Common encoding/serialization lib.
 - SSZ encoding used in Ethereum 2.0
 
 
-## Consensus
+### consensus
 
 Common consensus utilities
 
 - Least Majority as 2f + 1
 
 - Max Faulty as n / 3
+
+- Least Total with Faulty as 3f + 1
+
+- Verify Majority: m > n * 2 / 3
 
 
 ## Donation
