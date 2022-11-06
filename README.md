@@ -36,7 +36,7 @@ Extensions and utilities for standard libraries.
 
 - Integer serialization
 
-#### tree
+### tree
 
 Common merkle tree structures for proof verification.
 
