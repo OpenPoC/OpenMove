@@ -10,7 +10,7 @@ module openmove::mpt {
     const ENODE_MISSING: u64 = 21003;
 
     /// Verify mpt proof, and return the target value on success
-    /// NOTE: proof is a plain concated list of nodes, so proof = concate(node0, node1, node2, ...)
+    /// NOTE: proof is a plain concatenate list of nodes, so proof = concat(node0, node1, node2, ...)
     public fun verify_proof(hash: &vector<u8>, key: vector<u8>, proof: vector<u8>): vector<u8> {
         let buf = rlp::new_buf(proof);
         let nibbles = bytes_to_nibbles(&keccak256(key));
