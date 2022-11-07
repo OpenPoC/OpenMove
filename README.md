@@ -13,7 +13,7 @@ We aim to provide production ready open source libraries for move ecosystem, how
 
 ## Modules
 
-| module   | stauts               |  abort_code starts at  |
+| module   | status               |  abort_code starts at  |
 | -------- | -------------------- | ---------------------  |
 | std      | DONE                 | 10001                  |
 | consensus| DONE                 | NULL                   |
