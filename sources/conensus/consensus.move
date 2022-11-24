@@ -4,12 +4,12 @@ module openmove::consensus {
 
     /// Calculate the minimum majority of N that's bigger than a third of N, at least 2f + 1
     public fun least_majority(n: u64): u64 {
-        1 + n * 2 / 3
+        n - max_faulty(n)
     }
 
     /// Calculate the max faulty nodes of N without impacting the quorum, so f = N / 3
     public fun max_faulty(n: u64): u64 {
-        n / 3
+        (n - 1) / 3
     }
 
     /// Calculate the least total nodes allowing f faulty nodes without impacting the quorum, so 3f + 1
